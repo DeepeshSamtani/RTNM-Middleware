@@ -1,0 +1,101 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:task="http://www.springframework.org/schema/task" xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.2.xsd
+       http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+
+	<context:annotation-config />
+	<context:component-scan base-package="com.harman.rtnm.*">
+		<context:exclude-filter type="annotation"
+			expression="org.springframework.context.annotation.Configuration" />
+	</context:component-scan>
+
+	<mvc:annotation-driven />
+
+
+
+	<!-- Getting Database properties -->
+	<context:property-placeholder
+		location="classpath:restclient.properties,classpath:application.properties" />
+
+
+
+<!-- 	Specifying the Resource location to load JS, CSS, Images etc
+	<mvc:resources mapping="/static/**" location="/WEB-INF/static/" /> -->
+
+	<mvc:default-servlet-handler />
+
+	<tx:annotation-driven transaction-manager="transactionManager" />
+
+
+	<!-- Redis Connection Factory 
+	 <bean id="jedisConnFactory"
+		class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"
+		p:host-name="${redis.hostname}" p:port="${redis.port}" p:use-pool="true" /> -->
+
+
+	<!-- <bean id="stringSerializer"
+		class="org.springframework.data.redis.serializer.StringRedisSerializer" ></bean>
+
+	<bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate"
+		p:connection-factory-ref="jedisConnFactory">
+		<property name="keySerializer" ref="stringSerializer" />
+		<property name="valueSerializer" ref="stringSerializer" />
+	</bean> -->
+
+	<bean id="ds"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="ds" />
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
+				<prop key="hibernate.show_sql">${hibernate.show_sql:true}</prop>
+				<prop key="hibernate.connection.pool_size">100</prop>
+                <prop key="hibernate.connection.release_mode">on_close</prop>
+				<!-- <prop key="hibernate.cache.use_second_level_cache">true</prop>
+				<prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</prop>
+    	        <prop key="hibernate.cache.provider_class">org.hibernate.cache.EhCacheProvider</prop>   
+    	        <prop key="hibernate.cache.use_query_cache">true</prop>
+    	        <prop key="net.sf.ehcache.configurationResourceName">sqlehcache.xml</prop> -->    	        
+				<!-- Use this property if you want hibernate to create tables. Just create 
+					the DB configured in datasource. With this property enabled, hibernate will 
+					generate DDLs & create the required tables in DB. -->
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+			</props>
+		</property>
+
+		<property name="packagesToScan">
+			<array>
+				<value>com.harman.rtnm.*</value>
+			</array>
+		</property>
+	</bean>
+
+
+	<task:annotation-driven scheduler="eeNpmScheduler" />
+	<task:scheduler id="eeNpmScheduler" pool-size="10" />
+
+	<mvc:cors>
+		<mvc:mapping path="/**" allowed-origins="*"
+			allowed-methods="GET,PUT,POST,DELETE" allowed-headers="*"
+			exposed-headers="AUTH-TOKEN,Content-Disposition,Content-Type,Export-ReportName" />
+	</mvc:cors>
+</beans>
